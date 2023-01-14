@@ -1,22 +1,33 @@
+// ---- Import du model de la DB ---- //
 const Sauce = require("../models/sauce");
+
+// ---- Import du module File Systeme ---- //
 const fs = require("fs");
 
+// ---- Export du controller createSauce ---- //
 exports.createSauce = (req, res, next) => {
   const thingObject = JSON.parse(req.body.sauce);
   delete thingObject._id;
+
+  // -- Création d'une sauce -- //
   const sauce = new Sauce({
     ...thingObject,
+    // -- Création de l'URL de l'image -- //
     imageUrl: `${req.protocol}://${req.get("host")}/images/${
       req.file.filename
     }`,
   });
+
+  // -- Envoi de l'objet à la DB -- //
   sauce
     .save()
     .then(() => res.status(201).json({ message: "Objet enregistré !" }))
     .catch((error) => res.status(400).json({ error }));
 };
 
+// ---- Export du controller getOneSauce ---- //
 exports.getOneSauce = (req, res, next) => {
+  // -- Lecture d'une sauce via son ID -- //
   Sauce.findOne({ _id: req.params.id })
     .then((sauce) => {
       res.status(200).json(sauce);
@@ -28,8 +39,9 @@ exports.getOneSauce = (req, res, next) => {
     });
 };
 
+// ---- Export du controller modifySauce ---- //
 exports.modifySauce = (req, res, next) => {
-  // bloc supprimant l'ancienne image apres update du user
+  // -- Bloc de modification de l'objet supprimant l'ancienne image apres update du user -- //
   Sauce.findOne({ _id: req.params.id }).then((sauce) => {
     const filename = sauce.imageUrl.split("/images/")[1];
     fs.unlink(`images/${filename}`, () => {
@@ -41,6 +53,7 @@ exports.modifySauce = (req, res, next) => {
             }`,
           }
         : { ...req.body };
+      // -- Modification dans la DB -- //
       Sauce.updateOne(
         { _id: req.params.id },
         { ...thingObject, _id: req.params.id }
@@ -51,6 +64,7 @@ exports.modifySauce = (req, res, next) => {
   });
 };
 
+// ---- Export du controller deleteSauce ---- //
 exports.deleteSauce = (req, res, next) => {
   Sauce.findOne({ _id: req.params.id })
     .then((sauce) => {
@@ -64,6 +78,7 @@ exports.deleteSauce = (req, res, next) => {
     .catch((error) => res.status(500).json({ error }));
 };
 
+// ---- Export du controller getAllSauce ---- //
 exports.getAllSauces = (req, res, next) => {
   Sauce.find()
     .then((things) => {
@@ -76,16 +91,15 @@ exports.getAllSauces = (req, res, next) => {
     });
 };
 
-//----------------------------------------------------->>
-//-------------------partie Like/Dislike----------------------->>>>>
-//----------------------------------------------------->>
+// ---- Partie Like / Dislike ---- //
 
-// l'utilisateur like ou dislike une sauce
+// ---- Export du controller likeSauce ---- //
+// -- L'utilisateur like ou dislike une sauce -- //
 exports.likeSauce = (req, res, next) => {
   const sauceId = req.params.id;
   const userId = req.body.userId;
   const like = req.body.like;
-  // l'utilisateur met pour la premiere fois un like (like === 1)
+  // -- Si l'utilisateur met pour la premiere fois un like (like === 1) -- //
   if (like === 1) {
     Sauce.updateOne(
       { _id: sauceId },
@@ -98,7 +112,7 @@ exports.likeSauce = (req, res, next) => {
       .catch((error) => res.status(500).json({ error }));
   }
 
-  // l'utilisateur met pour la premiere fois un dislike (like === -1)
+  // Si l'utilisateur met pour la premiere fois un dislike (like === -1) -- //
   else if (like === -1) {
     Sauce.updateOne(
       { _id: sauceId },
@@ -112,8 +126,8 @@ exports.likeSauce = (req, res, next) => {
       )
       .catch((error) => res.status(500).json({ error }));
   }
-  // les changements d'avis de l'utilisateur :
-  // l'utilisateur change d'avis sur son like
+  // ---- Les changements d'avis de l'utilisateur : ---- //
+  // -- L'utilisateur change d'avis sur son like -- //
   else {
     Sauce.findOne({ _id: sauceId })
       .then((sauce) => {
@@ -128,7 +142,7 @@ exports.likeSauce = (req, res, next) => {
                 .json({ message: "L'utilisateur annule son Like" });
             })
             .catch((error) => res.status(500).json({ error }));
-          // l'utilisateur change d'avis sur son dislike
+          // -- L'utilisateur change d'avis sur son dislike -- //
         } else if (sauce.usersDisliked.includes(userId)) {
           Sauce.updateOne(
             { _id: sauceId },

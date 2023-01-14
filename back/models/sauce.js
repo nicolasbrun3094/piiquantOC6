@@ -1,5 +1,7 @@
+// ---- Import de Mongoose ---- //
 const mongoose = require("mongoose");
 
+// ---- Modèle de DB pour la sauce ---- //
 const sauceSchema = mongoose.Schema({
   userId: { type: String, required: true },
   name: { type: String, required: true },
@@ -14,4 +16,5 @@ const sauceSchema = mongoose.Schema({
   usersDisliked: { type: Array, default: [] },
 });
 
+// ---- Export du module ---- //
 module.exports = mongoose.model("Sauce", sauceSchema);

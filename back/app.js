@@ -1,7 +1,16 @@
+// ---- Import d'Express ---- //
 const express = require("express");
+
+// ---- Création de l'application Express---- //
 const app = express();
+
+// ---- Import de Mongoose---- //
 const mongoose = require("mongoose");
+
+// ---- Import du module Path ---- //
 const path = require("path");
+
+// ---- Import du module Helmet ---- //
 const helmet = require("helmet");
 
 const sauceRoutes = require("./routes/sauce");
@@ -10,7 +19,7 @@ const userRoutes = require("./routes/user");
 // ---- Permet de sécuriser nos en-têtes HTPP ---- //
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 
-// ----utilisation du module 'dotenv' pour masquer les informations de connexion à la base de données à l'aide de variables d'environnement ---- //
+// ---- Utilisation du module 'dotenv' pour masquer les informations de connexion à la base de données à l'aide de variables d'environnement ---- //
 require("dotenv").config();
 
 const mongo_pwd = process.env.MONGODB_PASSWORD;
