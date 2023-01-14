@@ -22,13 +22,14 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 // ---- Utilisation du module 'dotenv' pour masquer les informations de connexion à la base de données à l'aide de variables d'environnement ---- //
 require("dotenv").config();
 
+const mongo_user = process.env.MONGODB_USER;
 const mongo_pwd = process.env.MONGODB_PASSWORD;
-const mongo_name = process.env.MONGODB_NAME;
+const mongo_dbName = process.env.MONGODB_DBNAME;
 
 // ---- Appel de mongoose pour se connecter à la DB ---- //
 mongoose
   .connect(
-    "mongodb+srv://Yaga:cluster0@cluster0.38sv9pe.mongodb.net/test",
+    `mongodb+srv://${mongo_user}:${mongo_pwd}@${mongo_dbName}`,
 
     { useNewUrlParser: true, useUnifiedTopology: true }
   )
