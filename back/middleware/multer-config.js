@@ -17,6 +17,7 @@ const storage = multer.diskStorage({
   filename: (req, file, callback) => {
     const name = file.originalname
       .substring(0, file.originalname.lastIndexOf("."))
+      // part de l'index 0 du nom de fichier jusqu'au "." et delete le pts et l'extension.
       .split(" ")
       .join("_");
     const extension = MIME_TYPES[file.mimetype];

@@ -13,7 +13,7 @@ module.exports = (req, res, next) => {
     // -- Récupération du userId à l'intérieur du Token chiffré -- //
     const userId = decodedToken.userId;
 
-    // -- Comparaiosn du userId de la requête avec celui du Token -- //
+    // -- Comparaison du userId de la requête avec celui du Token -- //
     if (req.body.userId && req.body.userId !== userId) {
       throw "Invalid user ID";
     } else {

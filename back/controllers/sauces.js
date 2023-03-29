@@ -4,6 +4,8 @@ const Sauce = require("../models/sauce");
 // ---- Import du module File Systeme ---- //
 const fs = require("fs");
 
+const jwt = require("jsonwebtoken");
+
 // ---- Export du controller createSauce ---- //
 exports.createSauce = (req, res, next) => {
   const sauceObject = JSON.parse(req.body.sauce);
@@ -41,41 +43,71 @@ exports.getOneSauce = (req, res, next) => {
 
 // ---- Export du controller modifySauce ---- //
 exports.modifySauce = (req, res, next) => {
-  // -- Bloc de modification de l'objet supprimant l'ancienne image apres update du user -- //
-  Sauce.findOne({ _id: req.params.id }).then((sauce) => {
-    const filename = sauce.imageUrl.split("/images/")[1];
-    fs.unlink(`images/${filename}`, () => {
-      const sauceObject = req.file
-        ? {
-            ...JSON.parse(req.body.sauce),
-            imageUrl: `${req.protocol}://${req.get("host")}/images/${
-              req.file.filename
-            }`,
-          }
-        : { ...req.body };
-      // -- Modification dans la DB -- //
-      Sauce.updateOne(
-        { _id: req.params.id },
-        { ...sauceObject, _id: req.params.id }
-      )
-        .then(() => res.status(200).json({ message: "Objet modifié !" }))
-        .catch((error) => res.status(400).json({ error }));
+  // -- Récupère le jeton d'authentification dans l'en-tête d'autorisation -- //
+  const token = req.headers.authorization.split(" ")[1];
+  // -- Vérifie si le jeton est valide -- //
+  jwt.verify(token, "RANDOM_TOKEN_SECRET", (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: "Unauthorized request" });
+    }
+    // -- Récupère le userId à partir du jeton décodé -- //
+    const userId = decoded.userId;
+    // -- Vérifie si l'utilisateur est propriétaire de la sauce -- //
+    Sauce.findOne({ _id: req.params.id }).then((sauce) => {
+      if (sauce.userId !== userId) {
+        return res.status(401).json({ error: "Unauthorized request" });
+      }
+      // -- Bloc de modification de l'objet supprimant l'ancienne image apres update du user -- //
+      const filename = sauce.imageUrl.split("/images/")[1];
+      fs.unlink(`images/${filename}`, () => {
+        const sauceObject = req.file
+          ? {
+              ...JSON.parse(req.body.sauce),
+              imageUrl: `${req.protocol}://${req.get("host")}/images/${
+                req.file.filename
+              }`,
+            }
+          : { ...req.body };
+        // -- Modification dans la DB -- //
+        Sauce.updateOne(
+          { _id: req.params.id },
+          { ...sauceObject, _id: req.params.id }
+        )
+          .then(() => res.status(200).json({ message: "Objet modifié !" }))
+          .catch((error) => res.status(400).json({ error }));
+      });
     });
   });
 };
 
 // ---- Export du controller deleteSauce ---- //
+// Fonction deleteSauce avec vérification du token //
 exports.deleteSauce = (req, res, next) => {
-  Sauce.findOne({ _id: req.params.id })
-    .then((sauce) => {
-      const filename = sauce.imageUrl.split("/images/")[1];
-      fs.unlink(`images/${filename}`, () => {
-        Sauce.deleteOne({ _id: req.params.id })
-          .then(() => res.status(200).json({ message: "Objet supprimé !" }))
-          .catch((error) => res.status(400).json({ error }));
-      });
-    })
-    .catch((error) => res.status(500).json({ error }));
+  // -- Récupère le jeton d'authentification dans l'en-tête d'autorisation -- //
+  const token = req.headers.authorization.split(" ")[1];
+  // -- Vérifie si le jeton est valide -- //
+  jwt.verify(token, "RANDOM_TOKEN_SECRET", (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: "Unauthorized request" });
+    }
+    // -- Récupère le userId à partir du jeton décodé -- //
+    const userId = decoded.userId;
+    // -- Vérifie si l'utilisateur est propriétaire de la sauce -- //
+    Sauce.findOne({ _id: req.params.id })
+      .then((sauce) => {
+        if (sauce.userId !== userId) {
+          return res.status(401).json({ error: "Unauthorized request" });
+        }
+        // -- Supprime la sauce -- //
+        const filename = sauce.imageUrl.split("/images/")[1];
+        fs.unlink(`images/${filename}`, () => {
+          Sauce.deleteOne({ _id: req.params.id })
+            .then(() => res.status(200).json({ message: "Objet supprimé !" }))
+            .catch((error) => res.status(400).json({ error }));
+        });
+      })
+      .catch((error) => res.status(500).json({ error }));
+  });
 };
 
 // ---- Export du controller getAllSauce ---- //

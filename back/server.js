@@ -4,6 +4,7 @@ const http = require("http");
 // ---- Import de l'application app.js ---- //
 const app = require("./app");
 
+// ---- Vérification du port si il est valide ---- //
 const normalizePort = (val) => {
   const port = parseInt(val, 10);
 
